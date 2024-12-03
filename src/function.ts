@@ -43,48 +43,66 @@ const healthCheck = async function (context: Context, req: any): Promise<void> {
     };
 };
 
-const startCrawl = async function (context: Context, req: any): Promise<void> {
+const startCrawl = async function (context: any, req: any): Promise<void> {
     context.log('Start Crawl function processing request.');
     context.log('Request body:', req.body);
 
     try {
-        const url = (req.body && req.body.url) || (req.query && req.query.url);
+        if (!req.body) {
+            context.res = {
+                status: 400,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                body: JSON.stringify({ error: 'Request body is required' })
+            };
+            return;
+        }
+
+        const url = req.body.url;
         if (!url) {
             context.res = {
                 status: 400,
                 headers: {
+                    'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': '*'
                 },
-                body: { error: 'URL is required' }
+                body: JSON.stringify({ error: 'URL is required' })
             };
             return;
         }
 
         const crawler = new PlaywrightCrawler();
+        context.log('Starting crawl for URL:', url);
         const screenshotBase64 = await crawler.startCrawling(url);
+        context.log('Screenshot captured successfully');
         
         context.res = {
             status: 200,
             headers: {
+                'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
             },
-            body: { 
+            body: JSON.stringify({ 
                 message: 'Screenshot captured',
                 url,
                 screenshot: `data:image/jpeg;base64,${screenshotBase64}`
-            }
+            })
         };
     } catch (error: any) {
-        context.log.error('Error starting crawl:', error);
+        context.log.error('Error in startCrawl:', error);
         context.res = {
             status: 500,
             headers: {
+                'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
             },
-            body: { 
+            body: JSON.stringify({ 
                 error: error?.message || 'Unknown error occurred',
-                stack: error?.stack
-            }
+                stack: error?.stack,
+                details: error?.toString()
+            })
         };
     }
 };
