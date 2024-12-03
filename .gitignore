@@ -1,5 +1,7 @@
 node_modules/
+local.settings.json
 dist/
-.env
 screenshots/
+.env
+.vscode/
 *.log
