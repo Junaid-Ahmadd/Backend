@@ -253,7 +253,17 @@ export class PlaywrightCrawler {
 
             // Initialize browser
             this.browser = await chromium.launch({
-                headless: true
+                headless: true,
+                executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined,
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-accelerated-2d-canvas',
+                    '--no-first-run',
+                    '--no-zygote',
+                    '--disable-gpu'
+                ]
             });
 
             // Start with the base URL at depth 0
