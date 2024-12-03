@@ -45,11 +45,16 @@ jobs:
         run: |
           pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
           # Create a temp deployment package directory
-          mkdir -p ./package
+          New-Item -ItemType Directory -Path package -Force
           # Copy necessary files
-          cp -r host.json package.json dist events start-crawl node_modules ./package/
+          Copy-Item -Path host.json -Destination package/
+          Copy-Item -Path package.json -Destination package/
+          Copy-Item -Path dist -Destination package/ -Recurse
+          Copy-Item -Path events -Destination package/ -Recurse
+          Copy-Item -Path start-crawl -Destination package/ -Recurse
+          Copy-Item -Path node_modules -Destination package/ -Recurse
           # Create deployment zip
-          Compress-Archive -Path ./package/* -DestinationPath ./package.zip -Force
+          Compress-Archive -Path package/* -DestinationPath package.zip -Force
           popd
 
       - name: 'Run Azure Functions Action'
