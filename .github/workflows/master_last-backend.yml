@@ -10,8 +10,8 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: '.' # set this to the path to your web app project, defaults to the repository root
-  NODE_VERSION: '20.x' # Updated to Node.js 20 LTS
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: '.'
+  NODE_VERSION: '20.x'
 
 jobs:
   build-and-deploy:
@@ -25,17 +25,31 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Install Playwright Dependencies
-        run: |
-          npx playwright install chromium
-          npx playwright install-deps chromium
-
       - name: 'Resolve Project Dependencies Using Npm'
         shell: pwsh
         run: |
           pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
           npm install
-          npm run build --if-present
+          npm run build
+          popd
+
+      - name: Install Playwright Dependencies
+        shell: pwsh
+        run: |
+          pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
+          npx playwright install chromium --with-deps
+          popd
+
+      - name: 'Package Function App'
+        shell: pwsh
+        run: |
+          pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
+          # Create a temp deployment package directory
+          mkdir -p ./package
+          # Copy necessary files
+          cp -r host.json package.json dist events start-crawl node_modules ./package/
+          # Create deployment zip
+          Compress-Archive -Path ./package/* -DestinationPath ./package.zip -Force
           popd
 
       - name: 'Run Azure Functions Action'
@@ -44,5 +58,5 @@ jobs:
         with:
           app-name: 'last-backend'
           slot-name: 'Production'
-          package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+          package: '${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/package.zip'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_32D7579B90D742C994878E03651F2C95 }}
