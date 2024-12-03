@@ -1,7 +1,10 @@
-import { chromium, Browser, Page } from 'playwright';
+import { chromium, Browser, Page } from 'playwright-chromium';
 import * as path from 'path';
 import * as fs from 'fs';
-import * as express from 'express';
+
+interface Response {
+    write: (data: string) => void;
+}
 
 export class PlaywrightCrawler {
     private visitedUrls = new Set<string>();
@@ -18,7 +21,7 @@ export class PlaywrightCrawler {
     private screenshotDir: string;
 
     constructor(
-        private clients: Set<express.Response>,
+        private clients: Set<Response>,
         screenshotDir = path.join(process.cwd(), 'screenshots')
     ) {
         this.screenshotDir = screenshotDir;
