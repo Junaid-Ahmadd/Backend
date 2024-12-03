@@ -60,7 +60,7 @@ const startCrawl = async function (context: Context, req: any): Promise<void> {
             return;
         }
 
-        const crawler = new PlaywrightCrawler(clients);
+        const crawler = new PlaywrightCrawler();
         const screenshotBase64 = await crawler.startCrawling(url);
         
         context.res = {
