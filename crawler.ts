@@ -128,7 +128,7 @@ export class PlaywrightCrawler {
             const dataUrl = `data:image/jpeg;base64,${base64Image}`;
 
             return dataUrl;
-        } catch (error) {
+        } catch (error: any) {
             console.error(`Screenshot error for ${url}:`, error);
             throw error;
         }
@@ -186,8 +186,8 @@ export class PlaywrightCrawler {
                     }
                 }
             }
-        } catch (error) {
-            this.sendUpdate("error", `Error processing ${url}: ${error.message}`);
+        } catch (error: any) {
+            this.sendUpdate("error", `Error processing ${url}: ${error?.message || 'Unknown error'}`);
         } finally {
             if (page) await page.close();
             this.processing.delete(url);
@@ -257,8 +257,8 @@ export class PlaywrightCrawler {
             this.visitedUrls.add(url);
             this.queue.push({ url, depth: 0 });
             this.processQueue();
-        } catch (error) {
-            this.sendUpdate("error", `Invalid URL: ${error.message}`);
+        } catch (error: any) {
+            this.sendUpdate("error", `Invalid URL: ${error?.message || 'Unknown error'}`);
             await this.cleanup();
         }
     }

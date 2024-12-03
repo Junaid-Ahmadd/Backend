@@ -42,9 +42,9 @@ app.post('/start-crawl', async (req, res) => {
         await crawler.startCrawling(url);
         
         res.json({ message: 'Crawling started' });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error starting crawl:', error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: error?.message || 'Unknown error occurred' });
     }
 });
 

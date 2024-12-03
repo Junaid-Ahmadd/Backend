@@ -1,12 +1,31 @@
-import { AzureFunction, Context, HttpRequest } from "@azure/functions";
+import { HttpRequest } from "@azure/functions";
 import { PlaywrightCrawler } from './crawler';
 
 const clients = new Set<any>();
 
-const startCrawl: AzureFunction = async function (context: Context, req: HttpRequest): Promise<void> {
+interface Context {
+    log: {
+        (...args: any[]): void;
+        error: (...args: any[]) => void;
+    };
+    res: {
+        status?: number;
+        body?: any;
+        headers?: { [key: string]: string };
+    };
+    bindingData: {
+        req?: {
+            socket?: {
+                on: (event: string, handler: () => void) => void;
+            };
+        };
+    };
+}
+
+const startCrawl = async function (context: Context, req: any): Promise<void> {
     context.log('Start Crawl function processing request.');
 
-    const url = req.body?.url;
+    const url = (req.body && req.body.url) || (req.query && req.query.url);
     if (!url) {
         context.res = {
             status: 400,
@@ -23,16 +42,16 @@ const startCrawl: AzureFunction = async function (context: Context, req: HttpReq
             status: 200,
             body: { message: 'Crawling started' }
         };
-    } catch (error) {
+    } catch (error: any) {
         context.log.error('Error starting crawl:', error);
         context.res = {
             status: 500,
-            body: { error: error.message }
+            body: { error: error?.message || 'Unknown error occurred' }
         };
     }
 };
 
-const sseConnection: AzureFunction = async function (context: Context, req: HttpRequest): Promise<void> {
+const sseConnection = async function (context: Context, req: any): Promise<void> {
     context.log('SSE Connection function processing request.');
     
     context.res = {
@@ -48,10 +67,12 @@ const sseConnection: AzureFunction = async function (context: Context, req: Http
     // Add client to the set
     clients.add(context.res);
 
-    // Handle connection close
-    req.on('close', () => {
-        clients.delete(context.res);
-    });
+    // Handle connection close using context.bindingData
+    if (context.bindingData?.req?.socket) {
+        context.bindingData.req.socket.on('close', () => {
+            clients.delete(context.res);
+        });
+    }
 };
 
 export { startCrawl, sseConnection };
