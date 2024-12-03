@@ -22,6 +22,27 @@ interface Context {
     };
 }
 
+const healthCheck = async function (context: Context, req: any): Promise<void> {
+    context.log('Health check endpoint called');
+    
+    context.res = {
+        status: 200,
+        headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+        },
+        body: {
+            status: 'ok',
+            timestamp: new Date().toISOString(),
+            environment: {
+                node: process.version,
+                platform: process.platform,
+                arch: process.arch
+            }
+        }
+    };
+};
+
 const startCrawl = async function (context: Context, req: any): Promise<void> {
     context.log('Start Crawl function processing request.');
     context.log('Request body:', req.body);
@@ -40,14 +61,18 @@ const startCrawl = async function (context: Context, req: any): Promise<void> {
         }
 
         const crawler = new PlaywrightCrawler(clients);
-        await crawler.startCrawling(url);
+        const screenshotBase64 = await crawler.startCrawling(url);
         
         context.res = {
             status: 200,
             headers: {
                 'Access-Control-Allow-Origin': '*'
             },
-            body: { message: 'Crawling started', url }
+            body: { 
+                message: 'Screenshot captured',
+                url,
+                screenshot: `data:image/jpeg;base64,${screenshotBase64}`
+            }
         };
     } catch (error: any) {
         context.log.error('Error starting crawl:', error);
@@ -89,4 +114,4 @@ const sseConnection = async function (context: Context, req: any): Promise<void>
     }
 };
 
-export { startCrawl, sseConnection };
+export { startCrawl, sseConnection, healthCheck };
